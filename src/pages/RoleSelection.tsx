@@ -20,7 +20,7 @@ const RoleSelection = () => {
       title: "Fournisseur / Dépôt",
       description: "Gérer les commandes et attribuer les livraisons",
       icon: Package,
-      path: "/fournisseur/dashboard",
+      path: "/fournisseur/auth",
       color: "bg-accent",
     },
     {
@@ -28,7 +28,7 @@ const RoleSelection = () => {
       title: "Livreur",
       description: "Effectuer les livraisons et confirmer les paiements",
       icon: Truck,
-      path: "/livreur/tournee",
+      path: "/livreur/auth",
       color: "bg-success",
     },
   ];

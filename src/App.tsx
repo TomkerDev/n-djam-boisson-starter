@@ -11,8 +11,11 @@ import ClientCatalog from "./pages/client/ClientCatalog";
 import ClientCart from "./pages/client/ClientCart";
 import ClientCheckout from "./pages/client/ClientCheckout";
 import ClientTracking from "./pages/client/ClientTracking";
+import SupplierAuth from "./pages/supplier/SupplierAuth";
 import SupplierDashboard from "./pages/supplier/SupplierDashboard";
 import SupplierOrders from "./pages/supplier/SupplierOrders";
+import DriverAuth from "./pages/driver/DriverAuth";
+import DriverDashboard from "./pages/driver/DriverDashboard";
 import DriverDeliveries from "./pages/driver/DriverDeliveries";
 import DriverConfirm from "./pages/driver/DriverConfirm";
 
@@ -36,10 +39,13 @@ const App = () => (
           <Route path="/client/tracking" element={<ClientTracking />} />
           
           {/* Supplier Routes */}
+          <Route path="/fournisseur/auth" element={<SupplierAuth />} />
           <Route path="/fournisseur/dashboard" element={<SupplierDashboard />} />
           <Route path="/fournisseur/orders" element={<SupplierOrders />} />
           
           {/* Driver Routes */}
+          <Route path="/livreur/auth" element={<DriverAuth />} />
+          <Route path="/livreur/dashboard" element={<DriverDashboard />} />
           <Route path="/livreur/tournee" element={<DriverDeliveries />} />
           <Route path="/livreur/confirm/:orderId" element={<DriverConfirm />} />
           
