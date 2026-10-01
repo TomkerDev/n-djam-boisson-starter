@@ -3,10 +3,16 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Banknote, Smartphone } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Banknote, Smartphone, TriangleAlert } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { deliveries } from "@/data/orders";
+import { computeCashChange, formatFcfa } from "@/lib/format";
+
+/** Longueur attendue du code de vérification remis par le manager. */
+const VERIFICATION_CODE_LENGTH = 4;
 
 const DriverConfirm = () => {
   const navigate = useNavigate();
@@ -16,10 +22,27 @@ const DriverConfirm = () => {
   const [verificationCode, setVerificationCode] = useState("");
   const [amountReceived, setAmountReceived] = useState("");
 
-  const orderAmount = 66000;
+  const delivery = deliveries.find((item) => item.id === orderId);
+  const orderAmount = delivery?.amount ?? 0;
+
+  const received = Number.parseInt(amountReceived, 10);
+  const hasValidAmount = Number.isFinite(received) && received > 0;
+  const cashChange = hasValidAmount
+    ? computeCashChange(received, orderAmount)
+    : null;
+  const isShort = hasValidAmount && received < orderAmount;
 
   const handleConfirm = () => {
-    if (paymentMethod === "cash" && !amountReceived) {
+    if (!delivery) {
+      toast({
+        title: "Commande introuvable",
+        description: `Aucune livraison ne correspond à l'identifiant ${orderId}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!hasValidAmount) {
       toast({
         title: "Erreur",
         description: "Veuillez entrer le montant reçu",
@@ -28,10 +51,24 @@ const DriverConfirm = () => {
       return;
     }
 
-    if (!verificationCode) {
+    if (isShort) {
       toast({
-        title: "Erreur",
-        description: "Veuillez entrer le code de vérification",
+        title: "Montant insuffisant",
+        description: `Il manque ${formatFcfa(orderAmount - received)} à encaisser.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Le code est trimé avant contrôle pour ignorer les espaces de saisie.
+    const normalizedCode = verificationCode.trim();
+    if (
+      normalizedCode.length !== VERIFICATION_CODE_LENGTH ||
+      !/^\d+$/.test(normalizedCode)
+    ) {
+      toast({
+        title: "Code invalide",
+        description: `Le code de vérification doit contenir ${VERIFICATION_CODE_LENGTH} chiffres.`,
         variant: "destructive",
       });
       return;
@@ -39,7 +76,7 @@ const DriverConfirm = () => {
 
     toast({
       title: "Livraison confirmée !",
-      description: "Le paiement a été enregistré avec succès",
+      description: `Paiement de ${formatFcfa(orderAmount)} enregistré avec succès.`,
     });
     navigate("/livreur/tournee");
   };
@@ -72,13 +109,13 @@ const DriverConfirm = () => {
               <CheckCircle2 className="w-8 h-8 text-success" />
             </div>
             <h2 className="text-xl font-bold text-foreground mb-2">
-              Bar Le Relax
+              {delivery?.client ?? "Commande inconnue"}
             </h2>
             <p className="text-sm text-muted-foreground mb-1">
               Commande {orderId}
             </p>
             <p className="text-sm text-muted-foreground">
-              5 × Casier Flag 65cl
+              {delivery?.products ?? "-"}
             </p>
           </div>
 
@@ -88,7 +125,7 @@ const DriverConfirm = () => {
                 Montant à collecter
               </p>
               <p className="text-3xl font-bold text-primary">
-                {orderAmount.toLocaleString()} FCFA
+                {formatFcfa(orderAmount)}
               </p>
             </div>
           </div>
@@ -141,11 +178,42 @@ const DriverConfirm = () => {
             <Input
               id="amount"
               type="number"
-              placeholder="66000"
+              inputMode="numeric"
+              placeholder={String(orderAmount)}
               value={amountReceived}
               onChange={(e) => setAmountReceived(e.target.value)}
               className="text-lg"
             />
+
+            {isShort && (
+              <div className="mt-3 p-3 bg-destructive/10 border border-destructive rounded-lg flex items-start gap-2">
+                <TriangleAlert className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-destructive font-medium">
+                  Montant insuffisant : il manque {formatFcfa(orderAmount - received)}.
+                </p>
+              </div>
+            )}
+
+            {!isShort && cashChange && cashChange.breakdown.length > 0 && (
+              <div className="mt-3 p-3 bg-success/10 border border-success rounded-lg">
+                <div className="flex items-baseline justify-between mb-2">
+                  <span className="text-sm text-foreground font-medium">
+                    Monnaie à rendre
+                  </span>
+                  <span className="text-lg font-bold text-success">
+                    {formatFcfa(cashChange.change)}
+                  </span>
+                </div>
+                <Separator className="my-2" />
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  {cashChange.breakdown.map(({ denomination, count }) => (
+                    <span key={denomination} className="text-xs text-muted-foreground">
+                      {count} × {formatFcfa(denomination)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </Card>
         )}
 
@@ -156,13 +224,13 @@ const DriverConfirm = () => {
           </Label>
           <Input
             id="code"
-            placeholder="Code fourni par le manager"
+            placeholder="0000"
             value={verificationCode}
             onChange={(e) => setVerificationCode(e.target.value)}
             className="text-lg text-center tracking-widest"
           />
           <p className="text-sm text-muted-foreground mt-2">
-            Entrez le code fourni par le manager logistique
+            Code à {VERIFICATION_CODE_LENGTH} chiffres fourni par le manager logistique
           </p>
         </Card>
 
@@ -178,6 +246,7 @@ const DriverConfirm = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4">
         <div className="container mx-auto">
           <Button
+            disabled={!delivery || !hasValidAmount || isShort}
             className="w-full h-14 text-lg bg-success hover:bg-success/90"
             onClick={handleConfirm}
           >

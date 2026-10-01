@@ -3,19 +3,41 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Trash2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Trash2, AlertCircle, Minus, Plus, ShoppingCart } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { DELIVERY_DELAY_HOURS } from "@/lib/constants";
+import { formatFcfa } from "@/lib/format";
 
 const ClientCart = () => {
   const navigate = useNavigate();
+  const {
+    items,
+    subtotal,
+    commission,
+    total,
+    commissionRatePercent,
+    increment,
+    removeItem,
+  } = useCart();
 
-  // Données simulées du panier
-  const cartItems = [
-    { id: 1, name: "Casier Flag 65cl", price: 12000, quantity: 5, supplier: "Dépôt Central", image: "🍺" },
-  ];
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const commission = subtotal * 0.1;
-  const total = subtotal + commission;
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
+        <div className="text-6xl mb-4">🛒</div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Votre panier est vide
+        </h1>
+        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+          Parcourez le catalogue pour ajouter des casiers de boissons et snacks
+          à votre commande.
+        </p>
+        <Button onClick={() => navigate("/client/catalog")}>
+          <ShoppingCart className="w-4 h-4 mr-2" />
+          Voir le catalogue
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -38,27 +60,52 @@ const ClientCart = () => {
       <div className="container mx-auto px-4 py-6">
         {/* Cart Items */}
         <div className="space-y-4 mb-6">
-          {cartItems.map((item) => (
-            <Card key={item.id} className="p-4">
+          {items.map(({ product, quantity }) => (
+            <Card key={product.id} className="p-4">
               <div className="flex items-center gap-4">
-                <div className="text-5xl">{item.image}</div>
+                <div className="text-5xl">{product.image}</div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-foreground mb-1">
-                    {item.name}
+                    {product.name}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-2">
-                    {item.supplier}
+                    {product.supplier}
                   </p>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-foreground">
-                      {item.price.toLocaleString()} FCFA × {item.quantity}
+                      {formatFcfa(product.price)} × {quantity}
                     </span>
                     <Badge variant="secondary">
-                      {(item.price * item.quantity).toLocaleString()} FCFA
+                      {formatFcfa(product.price * quantity)}
                     </Badge>
                   </div>
+                  <div className="flex items-center gap-2 mt-3 w-fit bg-primary/10 rounded-lg p-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => increment(product.id, -1)}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                    <span className="font-semibold text-foreground w-8 text-center">
+                      {quantity}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => increment(product.id, 1)}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="ghost" size="icon" className="text-destructive">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive"
+                  onClick={() => removeItem(product.id)}
+                  aria-label={`Retirer ${product.name} du panier`}
+                >
                   <Trash2 className="w-5 h-5" />
                 </Button>
               </div>
@@ -75,30 +122,30 @@ const ClientCart = () => {
           <div className="space-y-3">
             <div className="flex justify-between text-foreground">
               <span>Sous-total</span>
-              <span className="font-medium">{subtotal.toLocaleString()} FCFA</span>
+              <span className="font-medium">{formatFcfa(subtotal)}</span>
             </div>
-            
+
             <div className="flex justify-between text-foreground">
               <span className="flex items-center gap-2">
-                Commission (10%)
+                Commission ({commissionRatePercent}%)
                 <AlertCircle className="w-4 h-4 text-muted-foreground" />
               </span>
               <span className="font-medium text-primary">
-                {commission.toLocaleString()} FCFA
+                {formatFcfa(commission)}
               </span>
             </div>
-            
+
             <Separator />
-            
+
             <div className="flex justify-between text-lg font-bold text-foreground">
               <span>Total</span>
-              <span className="text-primary">{total.toLocaleString()} FCFA</span>
+              <span className="text-primary">{formatFcfa(total)}</span>
             </div>
           </div>
 
           <div className="mt-6 p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground">
-              ℹ️ La commission de 10% couvre les frais de plateforme et de logistique.
+              ℹ️ La commission de {commissionRatePercent}% couvre les frais de plateforme et de logistique.
             </p>
           </div>
         </Card>
@@ -106,7 +153,7 @@ const ClientCart = () => {
         {/* Info Box */}
         <Card className="p-4 mt-4 bg-primary/5 border-primary/20">
           <p className="text-sm text-foreground">
-            📦 <strong>Livraison estimée :</strong> 2-4 heures après confirmation
+            📦 <strong>Livraison estimée :</strong> {DELIVERY_DELAY_HOURS} heures après confirmation
           </p>
         </Card>
       </div>
@@ -118,7 +165,7 @@ const ClientCart = () => {
             className="w-full h-14 text-lg"
             onClick={() => navigate("/client/checkout")}
           >
-            Passer la commande • {total.toLocaleString()} FCFA
+            Passer la commande • {formatFcfa(total)}
           </Button>
         </div>
       </div>

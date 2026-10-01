@@ -1,63 +1,34 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ShoppingCart, Search, Plus, Minus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  supplier: string;
-  image: string;
-  category: string;
-  unit: string;
-}
+import { useCart } from "@/context/CartContext";
+import { products, type ProductCategory } from "@/data/products";
+import { formatFcfa } from "@/lib/format";
 
 const ClientCatalog = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const { quantityOf, addItem, increment, totalItems } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
-  const [cart, setCart] = useState<Record<number, number>>({});
 
-  const products: Product[] = [
-    { id: 1, name: "Casier Flag 65cl", price: 12000, supplier: "Dépôt Central", image: "🍺", category: "bieres", unit: "casier" },
-    { id: 2, name: "Casier 33 Export 33cl", price: 11500, supplier: "Boissons Plus", image: "🍺", category: "bieres", unit: "casier" },
-    { id: 3, name: "Casier Gala 65cl", price: 11000, supplier: "Dépôt Central", image: "🍺", category: "bieres", unit: "casier" },
-    { id: 4, name: "Casier Coca-Cola 1L", price: 8500, supplier: "Boissons Express", image: "🥤", category: "sodas", unit: "casier" },
-    { id: 5, name: "Casier Sprite 1L", price: 8000, supplier: "Boissons Express", image: "🥤", category: "sodas", unit: "casier" },
-    { id: 6, name: "Casier Fanta 1L", price: 8000, supplier: "Dépôt Central", image: "🥤", category: "sodas", unit: "casier" },
-    { id: 7, name: "Pack Jus Tropical 1L", price: 6000, supplier: "Dépôt Central", image: "🧃", category: "jus", unit: "pack" },
-    { id: 8, name: "Pack Jus Orange 1L", price: 6500, supplier: "Boissons Plus", image: "🧃", category: "jus", unit: "pack" },
-  ];
+  const activeCategory = searchParams.get("category") as ProductCategory | null;
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
 
-  const updateCart = (productId: number, delta: number) => {
-    setCart((prev) => {
-      const newQuantity = (prev[productId] || 0) + delta;
-      if (newQuantity <= 0) {
-        const { [productId]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [productId]: newQuantity };
+    return products.filter((product) => {
+      const matchesCategory = !activeCategory || product.category === activeCategory;
+      const matchesQuery =
+        !query ||
+        product.name.toLowerCase().includes(query) ||
+        product.supplier.toLowerCase().includes(query);
+      return matchesCategory && matchesQuery;
     });
-  };
-
-  const addToCart = (product: Product) => {
-    updateCart(product.id, 1);
-    toast({
-      title: "Ajouté au panier",
-      description: `${product.name} ajouté au panier`,
-    });
-  };
-
-  const totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+  }, [searchQuery, activeCategory]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -99,7 +70,7 @@ const ClientCatalog = () => {
 
         <div className="space-y-4">
           {filteredProducts.map((product) => {
-            const quantity = cart[product.id] || 0;
+            const quantity = quantityOf(product.id);
             return (
               <Card key={product.id} className="p-4">
                 <div className="flex items-center gap-4">
@@ -113,7 +84,7 @@ const ClientCatalog = () => {
                     </p>
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-primary">
-                        {product.price.toLocaleString()} FCFA
+                        {formatFcfa(product.price)}
                       </span>
                       <Badge variant="secondary" className="text-xs">
                         {product.unit}
@@ -126,7 +97,7 @@ const ClientCatalog = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => updateCart(product.id, -1)}
+                          onClick={() => increment(product.id, -1)}
                         >
                           <Minus className="w-4 h-4" />
                         </Button>
@@ -136,13 +107,13 @@ const ClientCatalog = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => updateCart(product.id, 1)}
+                          onClick={() => increment(product.id, 1)}
                         >
                           <Plus className="w-4 h-4" />
                         </Button>
                       </div>
                     ) : (
-                      <Button size="sm" onClick={() => addToCart(product)}>
+                      <Button size="sm" onClick={() => addItem(product)}>
                         <ShoppingCart className="w-4 h-4 mr-2" />
                         Ajouter
                       </Button>

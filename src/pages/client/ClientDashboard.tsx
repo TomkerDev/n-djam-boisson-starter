@@ -13,45 +13,28 @@ import {
   User,
   Package,
 } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { categories, featuredProducts } from "@/data/products";
+import { STARTER_ORDER_QUOTA } from "@/lib/constants";
+import { formatFcfa } from "@/lib/format";
+
+const CATEGORY_ICONS = {
+  bieres: Wine,
+  sodas: Coffee,
+  jus: Milk,
+} as const;
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const { totalItems } = useCart();
   const remainingOrders = 12;
-  const maxOrders = 15;
+  const maxOrders = STARTER_ORDER_QUOTA;
 
-  const categories = [
-    { id: "bieres", name: "Bières", icon: Wine, count: 24 },
-    { id: "sodas", name: "Sodas", icon: Coffee, count: 18 },
-    { id: "jus", name: "Jus", icon: Milk, count: 12 },
-  ];
-
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Casier Flag 65cl",
-      price: 12000,
-      supplier: "Dépôt Central",
-      image: "🍺",
-      stock: "En stock",
-    },
-    {
-      id: 2,
-      name: "Casier Coca-Cola 1L",
-      price: 8500,
-      supplier: "Boissons Express",
-      image: "🥤",
-      stock: "En stock",
-    },
-    {
-      id: 3,
-      name: "Pack Jus Tropical 1L",
-      price: 6000,
-      supplier: "Dépôt Central",
-      image: "🧃",
-      stock: "En stock",
-    },
-  ];
+  const categoriesWithIcons = categories.map((category) => ({
+    ...category,
+    icon: CATEGORY_ICONS[category.id],
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,9 +47,16 @@ const ClientDashboard = () => {
               <Button
                 variant="outline"
                 size="icon"
+                className="relative"
                 onClick={() => navigate("/client/cart")}
+                aria-label={`Panier, ${totalItems} article(s)`}
               >
                 <ShoppingCart className="w-5 h-5" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground">
+                    {totalItems}
+                  </span>
+                )}
               </Button>
               <Button variant="ghost" size="icon">
                 <User className="w-5 h-5" />
@@ -109,7 +99,7 @@ const ClientDashboard = () => {
             Catégories
           </h2>
           <div className="grid grid-cols-3 gap-4">
-            {categories.map((category) => {
+            {categoriesWithIcons.map((category) => {
               const Icon = category.icon;
               return (
                 <Card
@@ -166,10 +156,10 @@ const ClientDashboard = () => {
                     </p>
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-primary">
-                        {product.price.toLocaleString()} FCFA
+                        {formatFcfa(product.price)}
                       </span>
                       <Badge variant="secondary" className="text-xs">
-                        {product.stock}
+                        En stock
                       </Badge>
                     </div>
                   </div>

@@ -3,45 +3,68 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Banknote, Smartphone, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/context/CartContext";
+import { DELIVERY_DELAY_HOURS } from "@/lib/constants";
+import { formatFcfa } from "@/lib/format";
+
+const paymentOptions = [
+  {
+    id: "cod",
+    label: "Paiement à la Livraison (Cash)",
+    description: "Payez en espèces à la réception",
+    icon: Banknote,
+  },
+  {
+    id: "moov",
+    label: "Moov Money",
+    description: "Paiement mobile instantané",
+    icon: Smartphone,
+  },
+  {
+    id: "airtel",
+    label: "Airtel Money",
+    description: "Paiement mobile instantané",
+    icon: Smartphone,
+  },
+];
 
 const ClientCheckout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { items, subtotal, commission, total, commissionRatePercent, clear } = useCart();
   const [paymentMethod, setPaymentMethod] = useState("cod");
-
-  const total = 66000; // Simulé depuis le panier
 
   const handleConfirmOrder = () => {
     toast({
       title: "Commande confirmée !",
       description: "Vous recevrez une notification lorsqu'un livreur sera attribué.",
     });
+    // Le panier est vidé après validation : les écrans suivants ne doivent plus
+    // refléter la commande qui vient d'être passée.
+    clear();
     navigate("/client/tracking");
   };
 
-  const paymentOptions = [
-    {
-      id: "cod",
-      label: "Paiement à la Livraison (Cash)",
-      description: "Payez en espèces à la réception",
-      icon: Banknote,
-    },
-    {
-      id: "moov",
-      label: "Moov Money",
-      description: "Paiement mobile instantané",
-      icon: Smartphone,
-    },
-    {
-      id: "airtel",
-      label: "Airtel Money",
-      description: "Paiement mobile instantané",
-      icon: Smartphone,
-    },
-  ];
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
+        <div className="text-6xl mb-4">📋</div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">
+          Aucune commande à passer
+        </h1>
+        <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+          Ajoutez des produits à votre panier avant de procéder au paiement.
+        </p>
+        <Button onClick={() => navigate("/client/catalog")}>
+          Voir le catalogue
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -69,19 +92,25 @@ const ClientCheckout = () => {
           <h2 className="text-lg font-semibold text-foreground mb-4">
             Récapitulatif de commande
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-3">
+            {items.map(({ product, quantity }) => (
+              <div key={product.id} className="flex justify-between text-foreground">
+                <span>
+                  {quantity} × {product.name}
+                </span>
+                <span className="font-medium">
+                  {formatFcfa(product.price * quantity)}
+                </span>
+              </div>
+            ))}
             <div className="flex justify-between text-foreground">
-              <span>5 × Casier Flag 65cl</span>
-              <span className="font-medium">60,000 FCFA</span>
+              <span>Commission ({commissionRatePercent}%)</span>
+              <span className="font-medium">{formatFcfa(commission)}</span>
             </div>
-            <div className="flex justify-between text-foreground">
-              <span>Commission (10%)</span>
-              <span className="font-medium">6,000 FCFA</span>
-            </div>
-            <div className="h-px bg-border my-3" />
+            <Separator />
             <div className="flex justify-between text-lg font-bold text-foreground">
               <span>Total</span>
-              <span className="text-primary">{total.toLocaleString()} FCFA</span>
+              <span className="text-primary">{formatFcfa(total)}</span>
             </div>
           </div>
         </Card>
@@ -129,7 +158,7 @@ const ClientCheckout = () => {
             <div className="text-sm text-foreground">
               <p className="font-medium mb-1">Livraison confirmée</p>
               <p className="text-muted-foreground">
-                Délai estimé : 2-4 heures après attribution d'un livreur
+                Délai estimé : {DELIVERY_DELAY_HOURS} heures après attribution d'un livreur
               </p>
             </div>
           </div>

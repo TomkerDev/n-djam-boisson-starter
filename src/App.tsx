@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { CartProvider } from "@/context/CartContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ClientAuth from "./pages/client/ClientAuth";
@@ -11,6 +12,7 @@ import ClientCatalog from "./pages/client/ClientCatalog";
 import ClientCart from "./pages/client/ClientCart";
 import ClientCheckout from "./pages/client/ClientCheckout";
 import ClientTracking from "./pages/client/ClientTracking";
+import ClientOrders from "./pages/client/ClientOrders";
 import SupplierAuth from "./pages/supplier/SupplierAuth";
 import SupplierDashboard from "./pages/supplier/SupplierDashboard";
 import SupplierOrders from "./pages/supplier/SupplierOrders";
@@ -23,6 +25,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <CartProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -37,6 +40,7 @@ const App = () => (
           <Route path="/client/cart" element={<ClientCart />} />
           <Route path="/client/checkout" element={<ClientCheckout />} />
           <Route path="/client/tracking" element={<ClientTracking />} />
+          <Route path="/client/orders" element={<ClientOrders />} />
           
           {/* Supplier Routes */}
           <Route path="/fournisseur/auth" element={<SupplierAuth />} />
@@ -54,6 +58,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </CartProvider>
   </QueryClientProvider>
 );
 

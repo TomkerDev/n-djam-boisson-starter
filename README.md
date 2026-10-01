@@ -1,73 +1,67 @@
-# Welcome to your Lovable project
+# N'Djam'Boisson Pro
 
-## Project info
+Plateforme B2B de logistique de boissons et snacks pour N'Djamena, Tchad.
 
-**URL**: https://lovable.dev/projects/9c819e4d-d151-496b-ad55-03267fdcaa2a
+Le produit met en relation trois acteurs :
 
-## How can I edit this code?
+- **Client / Gerant** - commande des casiers de boissons et snacks pour son etablissement
+- **Fournisseur / Depot** - recoit les commandes et attribue les livraisons
+- **Livreur** - effectue la tournee, collecte le paiement et confirme la livraison
 
-There are several ways of editing your application.
+## Stack technique
 
-**Use Lovable**
+| Couche | Technologie |
+| --- | --- |
+| Build | Vite 5 |
+| Langage | TypeScript 5.8 (strict) |
+| UI | React 18 + React Router 6 |
+| Style | Tailwind CSS 3 + shadcn/ui (Radix UI) |
+| Icones | lucide-react |
+| Validation | zod + react-hook-form + @hookform/resolvers |
+| Etat serveur | @tanstack/react-query |
+| Graphiques | recharts |
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/9c819e4d-d151-496b-ad55-03267fdcaa2a) and start prompting.
+## Prerequis
 
-Changes made via Lovable will be committed automatically to this repo.
+- Node.js >= 18
+- npm >= 9
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+npm ci
 ```
 
-**Edit a file directly in GitHub**
+## Commandes
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+| Commande | Description |
+| --- | --- |
+| `npm run dev` | Serveur de developpement sur http://localhost:8080 |
+| `npm run build` | Build de production dans `dist/` |
+| `npm run preview` | Sert le build de production localement |
+| `npm run typecheck` | Verification des types (TypeScript project build) |
+| `npm run lint` | Analyse statique ESLint |
 
-**Use GitHub Codespaces**
+Un seul gestionnaire de paquets est utilise : **npm** (`package-lock.json` fait foi).
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Variables d'environnement
 
-## What technologies are used for this project?
+Copiez `.env.example` vers `.env` et renseignez les valeurs.
 
-This project is built with:
+```sh
+cp .env.example .env
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Conventions
 
-## How can I deploy this project?
+- Les routes sont prefixees par le role : `/client/*`, `/fournisseur/*`, `/livreur/*`
+- Les donnees de demonstration sont centralisees dans `src/data/`
+- L'etat transverse est porte par des providers React dans `src/context/`
+- Les montants sont en FCFA
+- Les couleurs sont definies en HSL dans `src/index.css` (drapeau du Tchad)
 
-Simply open [Lovable](https://lovable.dev/projects/9c819e4d-d151-496b-ad55-03267fdcaa2a) and click on Share -> Publish.
+## Etat du projet
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+MVP fonctionnel cote navigation et parcours metier. Le backend n'est pas encore
+branche : les donnees proviennent de `src/data/` et le paiement mobile money est
+simule.
